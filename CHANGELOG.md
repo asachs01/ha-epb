@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-03-12
+
+### Added
+- Added support for handling hourly KWH resets from EPB meters
+- Added new Raw Energy sensor to show current hour's usage
+- Added hourly accumulation logic to properly track total energy usage
+
+### Changed
+- Changed energy sensor state class from TOTAL to TOTAL_INCREASING to better reflect the accumulating nature
+- Enhanced the coordinator to detect and handle hourly resets with the 15-minute update interval
+
 ## [1.0.4] - 2025-03-11
 
 ### Fixed
@@ -48,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved type checking issues with Home Assistant's typing helpers
 - Fixed dependency conflicts in test requirements
 
+[1.1.0]: https://github.com/asachs01/ha-epb/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/asachs01/ha-epb/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/asachs01/ha-epb/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/asachs01/ha-epb/compare/v1.0.1...v1.0.2

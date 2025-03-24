@@ -4,10 +4,8 @@ from datetime import timedelta
 
 DOMAIN = "epb"
 
-# Remove the SCAN_INTERVAL constant as we'll use Home Assistant's native mechanisms
-DEFAULT_SCAN_INTERVAL = timedelta(
-    minutes=15
-)  # We'll use this as a default but allow configuration
+# Keep the default scan interval at 15 minutes to match the API update frequency
+DEFAULT_SCAN_INTERVAL = timedelta(minutes=15)  # API only updates every 15 minutes
 
 # Configuration
 CONF_USERNAME = "username"

@@ -61,6 +61,16 @@ Each sensor includes additional attributes:
 - State
 - ZIP Code
 
+## How Energy Usage is Calculated
+
+EPB's smart meters reset their KWH readings every hour. This integration:
+
+1. Detects these hourly resets
+2. Accumulates the energy usage across hours
+3. Provides both the accumulated total and the current hour's usage as separate sensors
+
+The integration updates every 15 minutes to match the EPB API's update frequency. The reset detection algorithm is designed to work with this interval by tracking hour changes and detecting significant drops in KWH values.
+
 ## Contributing
 
 This is an active open-source project. Feel free to contribute by:
