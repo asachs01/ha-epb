@@ -53,6 +53,8 @@ class EPBUpdateCoordinator(DataUpdateCoordinator[Dict[str, Any]]):
             if current_day != self._current_day:
                 _LOGGER.info("New day detected, resetting accumulated KWH values")
                 self._accumulated_kwh = {}
+                self._prev_kwh_values = {}
+                self._last_hour = {}
                 self._current_day = current_day
 
             for account in self.account_links:
