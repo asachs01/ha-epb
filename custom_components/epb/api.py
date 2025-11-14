@@ -240,18 +240,8 @@ class EPBApiClient:
 
         # Get current date
         date = datetime.now()
-
-        # If we're in the first few days of a month, get previous month's data
-        if date.day <= 3:
-            if date.month == 1:
-                usage_year = date.year - 1
-                usage_month = 12
-            else:
-                usage_year = date.year
-                usage_month = date.month - 1
-        else:
-            usage_year = date.year
-            usage_month = date.month
+        usage_year = date.year
+        usage_month = date.month
 
         payload = {
             "account_number": account_id,

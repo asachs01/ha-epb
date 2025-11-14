@@ -65,7 +65,7 @@ class EPBEnergySensor(EPBSensorBase):
     """Sensor for EPB energy usage."""
 
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
 
     def __init__(
@@ -95,7 +95,7 @@ class EPBCostSensor(EPBSensorBase):
     """Sensor for EPB energy cost."""
 
     _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.TOTAL
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_native_unit_of_measurement = "$"
 
     def __init__(
