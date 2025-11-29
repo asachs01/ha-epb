@@ -51,15 +51,27 @@ Home Assistant integration for EPB (Electric Power Board) smart meter data.
 
 This integration provides the following sensors for each EPB account:
 
-- Energy Usage (kWh)
-- Energy Cost ($)
+### Month-to-Date Sensors (for Energy Dashboard)
+- **EPB Energy** (kWh) - Cumulative month-to-date energy usage
+- **EPB Cost** ($) - Cumulative month-to-date energy cost
+
+### Daily Sensors (for dashboard display)
+- **EPB Daily Energy** (kWh) - Today's energy usage
+- **EPB Daily Cost** ($) - Today's cost
 
 Each sensor includes additional attributes:
-- Account Number
-- Service Address
-- City
-- State
-- ZIP Code
+- Account ID
+
+## Energy Dashboard Setup
+
+To use this integration with Home Assistant's Energy Dashboard:
+
+1. Go to **Settings → Dashboards → Energy**
+2. Under **Electricity grid**, click **Add consumption**
+3. Select **EPB Energy** (the month-to-date sensor)
+4. Optionally, configure cost tracking with **EPB Cost**
+
+> **Important:** Only use the month-to-date sensors (EPB Energy/Cost) in the Energy Dashboard. The daily sensors reset each day and should only be used for informational display on regular dashboards.
 
 ## Contributing
 

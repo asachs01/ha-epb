@@ -12,7 +12,12 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.epb.api import AccountLink
 from custom_components.epb.const import DOMAIN
 from custom_components.epb.coordinator import EPBUpdateCoordinator
-from custom_components.epb.sensor import EPBCostSensor, EPBEnergySensor
+from custom_components.epb.sensor import (
+    EPBCostSensor,
+    EPBDailyCostSensor,
+    EPBDailyEnergySensor,
+    EPBEnergySensor,
+)
 
 pytestmark = pytest.mark.asyncio
 
@@ -21,7 +26,14 @@ pytestmark = pytest.mark.asyncio
 def mock_coordinator() -> Mock:
     """Create a mock coordinator."""
     coordinator = Mock(spec=EPBUpdateCoordinator)
-    coordinator.data = {"123": {"kwh": 100.0, "cost": 12.34}}
+    coordinator.data = {
+        "123": {
+            "kwh": 500.0,  # Month-to-date total
+            "cost": 62.50,  # Month-to-date cost
+            "daily_kwh": 40.0,  # Today's usage
+            "daily_cost": 5.00,  # Today's cost
+        }
+    }
     coordinator.account_links = [
         {
             "power_account": {
@@ -34,31 +46,59 @@ def mock_coordinator() -> Mock:
     ]
     coordinator.last_update_success = True
     coordinator.client = Mock()
-    coordinator.client.get_usage_data.return_value = {"kwh": 100.0, "cost": 12.34}
+    coordinator.client.get_usage_data.return_value = {
+        "kwh": 500.0,
+        "cost": 62.50,
+        "daily_kwh": 40.0,
+        "daily_cost": 5.00,
+    }
     return coordinator
 
 
 def test_energy_sensor(mock_coordinator: Mock) -> None:
-    """Test the energy sensor."""
+    """Test the month-to-date energy sensor."""
     sensor = EPBEnergySensor(mock_coordinator, "123")
 
     assert sensor.unique_id == "epb_energy_123"
     assert sensor.name == "EPB Energy 123"
     assert sensor.available is True
-    assert sensor.native_value == 100.0
+    assert sensor.native_value == 500.0  # Month-to-date total
 
     attributes = sensor.extra_state_attributes
     assert attributes["account_id"] == "123"
 
 
 def test_cost_sensor(mock_coordinator: Mock) -> None:
-    """Test the cost sensor."""
+    """Test the month-to-date cost sensor."""
     sensor = EPBCostSensor(mock_coordinator, "123")
 
     assert sensor.unique_id == "epb_cost_123"
     assert sensor.name == "EPB Cost 123"
     assert sensor.available is True
-    assert sensor.native_value == 12.34
+    assert sensor.native_value == 62.50  # Month-to-date total
+
+
+def test_daily_energy_sensor(mock_coordinator: Mock) -> None:
+    """Test the daily energy sensor."""
+    sensor = EPBDailyEnergySensor(mock_coordinator, "123")
+
+    assert sensor.unique_id == "epb_daily_energy_123"
+    assert sensor.name == "EPB Daily Energy 123"
+    assert sensor.available is True
+    assert sensor.native_value == 40.0  # Today's usage
+
+    attributes = sensor.extra_state_attributes
+    assert attributes["account_id"] == "123"
+
+
+def test_daily_cost_sensor(mock_coordinator: Mock) -> None:
+    """Test the daily cost sensor."""
+    sensor = EPBDailyCostSensor(mock_coordinator, "123")
+
+    assert sensor.unique_id == "epb_daily_cost_123"
+    assert sensor.name == "EPB Daily Cost 123"
+    assert sensor.available is True
+    assert sensor.native_value == 5.00  # Today's cost
 
 
 def test_sensor_unavailable(mock_coordinator: Mock) -> None:
@@ -69,12 +109,18 @@ def test_sensor_unavailable(mock_coordinator: Mock) -> None:
 
     energy_sensor = EPBEnergySensor(mock_coordinator, "123")
     cost_sensor = EPBCostSensor(mock_coordinator, "123")
+    daily_energy_sensor = EPBDailyEnergySensor(mock_coordinator, "123")
+    daily_cost_sensor = EPBDailyCostSensor(mock_coordinator, "123")
 
     assert energy_sensor.available is True  # Changed because coordinator is successful
     assert cost_sensor.available is True  # Changed because coordinator is successful
+    assert daily_energy_sensor.available is True
+    assert daily_cost_sensor.available is True
     # With empty data, we expect None
     assert energy_sensor.native_value is None
     assert cost_sensor.native_value is None
+    assert daily_energy_sensor.native_value is None
+    assert daily_cost_sensor.native_value is None
 
 
 @pytest.fixture

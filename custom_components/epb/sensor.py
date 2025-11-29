@@ -32,8 +32,12 @@ async def async_setup_entry(
         account_id = account["power_account"]["account_id"]
         entities.extend(
             [
+                # Month-to-date totals (for Energy Dashboard)
                 EPBEnergySensor(coordinator, account_id),
                 EPBCostSensor(coordinator, account_id),
+                # Daily usage sensors (for daily tracking)
+                EPBDailyEnergySensor(coordinator, account_id),
+                EPBDailyCostSensor(coordinator, account_id),
             ]
         )
 
@@ -62,7 +66,7 @@ class EPBSensorBase(CoordinatorEntity[EPBUpdateCoordinator], SensorEntity):
 
 
 class EPBEnergySensor(EPBSensorBase):
-    """Sensor for EPB energy usage."""
+    """Sensor for EPB month-to-date energy usage (for Energy Dashboard)."""
 
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -92,7 +96,7 @@ class EPBEnergySensor(EPBSensorBase):
 
 
 class EPBCostSensor(EPBSensorBase):
-    """Sensor for EPB energy cost."""
+    """Sensor for EPB month-to-date energy cost."""
 
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -119,3 +123,59 @@ class EPBCostSensor(EPBSensorBase):
 
         cost = self.coordinator.data[self.account_id].get("cost")
         return float(cost) if cost is not None else None
+
+
+class EPBDailyEnergySensor(EPBSensorBase):
+    """Sensor for EPB daily energy usage (today only)."""
+
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+
+    def __init__(
+        self,
+        coordinator: EPBUpdateCoordinator,
+        account_id: str,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, account_id)
+        self._attr_unique_id = f"epb_daily_energy_{account_id}"
+        self.entity_id = f"sensor.epb_daily_energy_{account_id}"
+        self._attr_name = f"EPB Daily Energy {account_id}"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return today's energy usage."""
+        if not self.coordinator.data or self.account_id not in self.coordinator.data:
+            return None
+
+        daily_kwh = self.coordinator.data[self.account_id].get("daily_kwh")
+        return float(daily_kwh) if daily_kwh is not None else None
+
+
+class EPBDailyCostSensor(EPBSensorBase):
+    """Sensor for EPB daily energy cost (today only)."""
+
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_native_unit_of_measurement = "$"
+
+    def __init__(
+        self,
+        coordinator: EPBUpdateCoordinator,
+        account_id: str,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, account_id)
+        self._attr_unique_id = f"epb_daily_cost_{account_id}"
+        self.entity_id = f"sensor.epb_daily_cost_{account_id}"
+        self._attr_name = f"EPB Daily Cost {account_id}"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return today's energy cost."""
+        if not self.coordinator.data or self.account_id not in self.coordinator.data:
+            return None
+
+        daily_cost = self.coordinator.data[self.account_id].get("daily_cost")
+        return float(daily_cost) if daily_cost is not None else None

@@ -82,6 +82,7 @@ async def test_get_usage_data_success(mock_session: AsyncMock) -> None:
     mock_response = AsyncMock()
     mock_response.status = 200
     mock_response.json.return_value = {
+        "interval_a_totals": {"pos_kwh": "500", "pos_wh_est_cost": "62.50"},
         "data": [{"a": {"values": {"pos_kwh": "100", "pos_wh_est_cost": "12.34"}}}]
     }
 
@@ -92,7 +93,11 @@ async def test_get_usage_data_success(mock_session: AsyncMock) -> None:
 
     result = await client.get_usage_data("123", "456")
 
-    assert result == {"kwh": 100.0, "cost": 12.34}
+    # Now returns both totals and daily values
+    assert result["kwh"] == 500.0  # Month-to-date total
+    assert result["cost"] == 62.50  # Month-to-date cost
+    assert result["daily_kwh"] == 100.0  # Today's usage
+    assert result["daily_cost"] == 12.34  # Today's cost
     mock_session.post.assert_called_once()
 
 

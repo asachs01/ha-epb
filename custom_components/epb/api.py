@@ -167,59 +167,72 @@ class EPBApiClient:
         except Exception as err:
             raise EPBApiError(f"Error fetching account links: {err}") from err
 
-    def _extract_usage_data(self, data: Dict[str, Any]) -> Dict[str, float]:
+    def _extract_usage_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Extract usage data from API response.
 
         Args:
             data: The raw API response data
 
         Returns:
-            A dictionary containing kwh and cost values
+            A dictionary containing:
+            - kwh: Month-to-date total kWh (for TOTAL_INCREASING sensor)
+            - cost: Month-to-date total cost (for TOTAL_INCREASING sensor)
+            - daily_kwh: Today's kWh usage (for daily tracking)
+            - daily_cost: Today's cost (for daily tracking)
         """
+        result: Dict[str, Any] = {
+            "kwh": 0.0,
+            "cost": 0.0,
+            "daily_kwh": 0.0,
+            "daily_cost": 0.0,
+        }
+
         try:
-            # First try to get data from daily format
-            if "data" in data and data["data"]:
-                # Find the last entry that has actual data
-                daily_data = data["data"]
-                latest_data = None
-
-                for entry in reversed(daily_data):
-                    if "a" in entry and "values" in entry["a"]:
-                        latest_data = entry["a"]["values"]
-                        break
-
-                if latest_data:
-                    return {
-                        "kwh": float(latest_data.get("pos_kwh", 0)),
-                        "cost": float(latest_data.get("pos_wh_est_cost", 0)),
-                    }
-
-            # If that fails or no daily data found, try the monthly format
+            # Get month-to-date totals (primary data for Energy Dashboard)
             if "interval_a_totals" in data:
                 totals = data["interval_a_totals"]
-                return {
-                    "kwh": float(totals.get("pos_kwh", 0)),
-                    "cost": float(totals.get("pos_wh_est_cost", 0)),
-                }
+                result["kwh"] = float(totals.get("pos_kwh", 0))
+                result["cost"] = float(totals.get("pos_wh_est_cost", 0))
+                _LOGGER.debug(
+                    "Month-to-date totals: %s kWh, $%s",
+                    result["kwh"],
+                    result["cost"],
+                )
 
-            # If both attempts fail, try interval_a_averages
-            if "interval_a_averages" in data:
-                averages = data["interval_a_averages"]
-                return {
-                    "kwh": float(averages.get("pos_kwh", 0)),
-                    "cost": float(averages.get("pos_wh_est_cost", 0)),
-                }
+            # Get today's daily usage from the data array
+            if "data" in data and data["data"]:
+                daily_data = data["data"]
+                # Find the last entry that has actual data (today or most recent)
+                for entry in reversed(daily_data):
+                    if "a" in entry and "values" in entry["a"]:
+                        daily_values = entry["a"]["values"]
+                        result["daily_kwh"] = float(daily_values.get("pos_kwh", 0))
+                        result["daily_cost"] = float(daily_values.get("pos_wh_est_cost", 0))
+                        _LOGGER.debug(
+                            "Daily usage: %s kWh, $%s",
+                            result["daily_kwh"],
+                            result["daily_cost"],
+                        )
+                        break
 
-            _LOGGER.warning("No valid data format found in response: %s", data)
-            return {"kwh": 0.0, "cost": 0.0}
+            # Fallback: if no totals but we have daily data, use daily as totals
+            if result["kwh"] == 0.0 and result["daily_kwh"] > 0:
+                result["kwh"] = result["daily_kwh"]
+                result["cost"] = result["daily_cost"]
+                _LOGGER.warning("No totals found, using daily values as fallback")
+
+            if result["kwh"] == 0.0 and result["daily_kwh"] == 0.0:
+                _LOGGER.warning("No valid data found in response")
+
+            return result
 
         except (KeyError, IndexError, TypeError, ValueError) as err:
             _LOGGER.error("Error parsing usage data: %s. Data: %s", err, data)
-            return {"kwh": 0.0, "cost": 0.0}
+            return result
 
     async def get_usage_data(
         self, account_id: str, gis_id: Optional[int]
-    ) -> Dict[str, float]:
+    ) -> Dict[str, Any]:
         """Get usage data for an account.
 
         Args:
@@ -281,4 +294,4 @@ class EPBApiClient:
                 account_id,
                 err,
             )
-            return {"kwh": 0.0, "cost": 0.0}
+            return {"kwh": 0.0, "cost": 0.0, "daily_kwh": 0.0, "daily_cost": 0.0}
