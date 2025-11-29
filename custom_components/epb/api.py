@@ -207,7 +207,9 @@ class EPBApiClient:
                     if "a" in entry and "values" in entry["a"]:
                         daily_values = entry["a"]["values"]
                         result["daily_kwh"] = float(daily_values.get("pos_kwh", 0))
-                        result["daily_cost"] = float(daily_values.get("pos_wh_est_cost", 0))
+                        result["daily_cost"] = float(
+                            daily_values.get("pos_wh_est_cost", 0)
+                        )
                         _LOGGER.debug(
                             "Daily usage: %s kWh, $%s",
                             result["daily_kwh"],

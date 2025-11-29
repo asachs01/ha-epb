@@ -83,7 +83,7 @@ async def test_get_usage_data_success(mock_session: AsyncMock) -> None:
     mock_response.status = 200
     mock_response.json.return_value = {
         "interval_a_totals": {"pos_kwh": "500", "pos_wh_est_cost": "62.50"},
-        "data": [{"a": {"values": {"pos_kwh": "100", "pos_wh_est_cost": "12.34"}}}]
+        "data": [{"a": {"values": {"pos_kwh": "100", "pos_wh_est_cost": "12.34"}}}],
     }
 
     mock_session.post.return_value.__aenter__.return_value = mock_response

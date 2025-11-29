@@ -12,12 +12,9 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.epb.api import AccountLink
 from custom_components.epb.const import DOMAIN
 from custom_components.epb.coordinator import EPBUpdateCoordinator
-from custom_components.epb.sensor import (
-    EPBCostSensor,
-    EPBDailyCostSensor,
-    EPBDailyEnergySensor,
-    EPBEnergySensor,
-)
+from custom_components.epb.sensor import (EPBCostSensor, EPBDailyCostSensor,
+                                          EPBDailyEnergySensor,
+                                          EPBEnergySensor)
 
 pytestmark = pytest.mark.asyncio
 
