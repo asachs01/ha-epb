@@ -1,5 +1,6 @@
 {
     "name": "Electric Power Board (EPB) energy monitor",
     "hacs": "1.6.0",
-    "homeassistant": "2024.1.0"
+    "homeassistant": "2024.1.0",
+    "country": ["US"]
 }
