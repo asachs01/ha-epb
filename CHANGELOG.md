@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.6] - 2026-05-03
+
+### Fixed
+- Fixed inflated Energy Dashboard totals (e.g. multi-MWh spikes) caused by transient API parse failures returning `0.0`, which the `total_increasing` state class interpreted as a meter reset followed by a fresh increment. Missing values now yield `None` so sensors briefly become unavailable instead of synthesizing a reset (#3).
+- Fixed `EPBCostSensor` warning: `state_class 'total_increasing' is impossible considering device_class 'monetary'`. Cost sensor now uses `state_class = total`, which is the correct pairing for monetary device classes (#3).
+- Removed broad exception swallowing in `get_usage_data` that returned zeros on any error; failures now propagate so the coordinator marks the update failed and Home Assistant preserves the last known value.
+
 ## [1.0.4] - 2025-03-11
 
 ### Fixed

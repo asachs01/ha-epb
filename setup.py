@@ -8,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="ha-epb",
-    version="1.0.5",
+    version="1.0.6",
     description="Home Assistant integration for EPB (Electric Power Board)",
     long_description=long_description,
     long_description_content_type="text/markdown",

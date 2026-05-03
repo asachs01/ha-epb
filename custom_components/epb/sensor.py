@@ -99,7 +99,7 @@ class EPBCostSensor(EPBSensorBase):
     """Sensor for EPB month-to-date energy cost."""
 
     _attr_device_class = SensorDeviceClass.MONETARY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_state_class = SensorStateClass.TOTAL
     _attr_native_unit_of_measurement = "$"
 
     def __init__(

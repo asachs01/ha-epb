@@ -101,6 +101,42 @@ async def test_get_usage_data_success(mock_session: AsyncMock) -> None:
     mock_session.post.assert_called_once()
 
 
+async def test_get_usage_data_missing_totals_returns_none(
+    mock_session: AsyncMock,
+) -> None:
+    """Missing totals must yield None, not 0.0, to avoid phantom resets."""
+    mock_response = AsyncMock()
+    mock_response.status = 200
+    mock_response.json.return_value = {"data": []}
+
+    mock_session.post.return_value.__aenter__.return_value = mock_response
+
+    client = EPBApiClient("test@example.com", "password", mock_session)
+    client._token = "test-token"
+
+    result = await client.get_usage_data("123", "456")
+
+    assert result["kwh"] is None
+    assert result["cost"] is None
+    assert result["daily_kwh"] is None
+    assert result["daily_cost"] is None
+
+
+async def test_get_usage_data_http_error_raises(mock_session: AsyncMock) -> None:
+    """Non-200 responses must raise so the coordinator can mark UpdateFailed."""
+    mock_response = AsyncMock()
+    mock_response.status = 500
+    mock_response.text.return_value = "boom"
+
+    mock_session.post.return_value.__aenter__.return_value = mock_response
+
+    client = EPBApiClient("test@example.com", "password", mock_session)
+    client._token = "test-token"
+
+    with pytest.raises(EPBApiError):
+        await client.get_usage_data("123", "456")
+
+
 async def test_token_refresh_on_expired(mock_session: AsyncMock) -> None:
     """Test token refresh when expired."""
     # Skip this test for now due to errors
