@@ -16,7 +16,7 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import aiohttp_client, selector
 
 from .api import EPBApiClient, EPBApiError, EPBAuthError
-from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import CONF_TOKENS, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         ): selector.NumberSelector(
             selector.NumberSelectorConfig(
                 min=1,
-                max=60,
+                max=55,
                 step=1,
                 unit_of_measurement="minutes",
                 mode=selector.NumberSelectorMode.SLIDER,
@@ -40,8 +40,12 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
-    """Validate the user input allows us to connect."""
+async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
+    """Validate the user input allows us to connect.
+
+    Returns the tokens from the login so setup can reuse them instead of
+    immediately spending a second rate-limited password login.
+    """
     session = aiohttp_client.async_get_clientsession(hass)
     client = EPBApiClient(
         data[CONF_USERNAME],
@@ -55,6 +59,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> None:
         raise InvalidAuth from err
     except EPBApiError as err:
         raise CannotConnect from err
+    return client.tokens
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -69,7 +74,7 @@ class EPBConfigFlow(config_entries.ConfigFlow):
         config_entry: config_entries.ConfigEntry,
     ) -> EPBOptionsFlow:
         """Get the options flow for this handler."""
-        return EPBOptionsFlow(config_entry)
+        return EPBOptionsFlow()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -79,7 +84,7 @@ class EPBConfigFlow(config_entries.ConfigFlow):
 
         if user_input is not None:
             try:
-                await validate_input(self.hass, user_input)
+                tokens = await validate_input(self.hass, user_input)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             except InvalidAuth:
@@ -91,7 +96,8 @@ class EPBConfigFlow(config_entries.ConfigFlow):
                 await self.async_set_unique_id(user_input[CONF_USERNAME])
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title=user_input[CONF_USERNAME], data=user_input
+                    title=user_input[CONF_USERNAME],
+                    data={**user_input, CONF_TOKENS: tokens},
                 )
 
         return self.async_show_form(
@@ -102,27 +108,24 @@ class EPBConfigFlow(config_entries.ConfigFlow):
 class EPBOptionsFlow(config_entries.OptionsFlow):
     """Handle options."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
         if user_input is not None:
-            # Convert minutes to timedelta
+            # Stored as plain minutes: options must be JSON-serialisable.
             if CONF_SCAN_INTERVAL in user_input:
-                user_input[CONF_SCAN_INTERVAL] = timedelta(
-                    minutes=user_input[CONF_SCAN_INTERVAL]
-                )
+                user_input[CONF_SCAN_INTERVAL] = int(user_input[CONF_SCAN_INTERVAL])
             return self.async_create_entry(title="", data=user_input)
 
         # Convert timedelta to minutes for the form
         current_interval = self.config_entry.options.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
-        interval_minutes = current_interval.total_seconds() / 60
+        if isinstance(current_interval, timedelta):
+            interval_minutes = current_interval.total_seconds() / 60
+        else:
+            interval_minutes = float(current_interval)
 
         options_schema = vol.Schema(
             {
@@ -131,7 +134,7 @@ class EPBOptionsFlow(config_entries.OptionsFlow):
                 ): selector.NumberSelector(
                     selector.NumberSelectorConfig(
                         min=1,
-                        max=60,
+                        max=55,
                         step=1,
                         unit_of_measurement="minutes",
                         mode=selector.NumberSelectorMode.SLIDER,

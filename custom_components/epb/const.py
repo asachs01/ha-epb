@@ -12,6 +12,7 @@ DEFAULT_SCAN_INTERVAL = timedelta(
 # Configuration
 CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
+CONF_TOKENS = "tokens"
 
 # API endpoints
 BASE_URL = "https://api.epb.com/web/api/v1"
