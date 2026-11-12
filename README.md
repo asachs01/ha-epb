@@ -45,7 +45,17 @@ Home Assistant integration for EPB (Electric Power Board) smart meter data.
 2. Click "ADD INTEGRATION"
 3. Search for "EPB"
 4. Enter your EPB credentials
-5. Configure update interval (optional)
+5. Configure update interval (optional, 1–55 minutes)
+
+### Login rate limits
+
+EPB allows only 6 password logins per 15 minutes and 12 per 24 hours per
+account. The integration logs in with your password once, then renews its
+session with EPB's refresh token on every poll, so normal operation uses no
+further password logins. Tokens are saved, so restarts and reloads reuse them
+too. The update interval is capped at 55 minutes because EPB refresh tokens
+expire after 60 minutes; a longer interval would let the token lapse and force
+a password login on every poll.
 
 ## Sensors
 
