@@ -10,6 +10,8 @@
     jobs:
       format:
         name: Format code
+        # Auto-format pushes commits back, which can't work for PRs from forks.
+        if: github.event_name == 'push'
         runs-on: ubuntu-latest
         permissions:
           contents: write
@@ -38,6 +40,7 @@
 
       lint:
         needs: format
+        if: ${{ !failure() && !cancelled() }}
         name: Check code quality
         runs-on: ubuntu-latest
         steps:
