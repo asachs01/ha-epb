@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.7] - 2026-10-23
+## [1.0.7] - 2026-11-16
 
 ### Fixed
-- Stopped the integration from being locked out by EPB's login rate limits (6 password logins per 15 minutes, 12 per 24 hours). It previously did a full password login whenever the access token expired (every 15 minutes), which hit the daily cap within hours and left the sensors unavailable.
+- Stopped the integration from being locked out by EPB's login rate limits (6 password logins per 15 minutes, 12 per 24 hours). It previously did a full password login whenever the access token expired (every 15 minutes), which hit the daily cap within hours and left the sensors unavailable (#5, fixed in #7, thanks @tspirtle).
 - Fixed the options flow saving the update interval as a `timedelta`, which isn't JSON-serialisable. It's now stored as whole minutes, and existing `timedelta` values are still read.
 
 ### Changed
@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expired access tokens are renewed with the refresh token (`grant_type: REFRESH_TOKEN`), which doesn't count as a password login. A password login only happens when there is no refresh token or EPB rejects it. A rate-limit response (HTTP 429) is never answered with another login attempt.
 - Tokens are saved in Home Assistant storage (`.storage/epb.<entry_id>`) so restarts and reloads reuse them. The tokens from the initial login in the config flow are reused for first setup instead of logging in a second time. Stored tokens are deleted when the integration is removed.
 - The update interval is capped at 55 minutes because refresh tokens expire after 60 minutes.
+- Added local brand assets (icon and logo) for Home Assistant 2026.3+ (#6, thanks @frenck).
 - The options flow no longer passes `config_entry` to `OptionsFlow`, which Home Assistant has deprecated. The minimum Home Assistant version is now 2024.11.0.
 
 ## [1.0.6] - 2026-05-03
